@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.app/schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "node signal_service.js",
+    "regions": ["us-east1"]
+  }
+}

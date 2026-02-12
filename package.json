@@ -1,0 +1,8 @@
+{
+  "name": "crypto-signal-service",
+  "version": "1.0.0",
+  "main": "signal_service.js",
+  "scripts": {
+    "start": "node signal_service.js"
+  }
+}
