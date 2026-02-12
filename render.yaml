@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: crypto-signal-service
+    env: node
+    buildCommand: npm install
+    startCommand: node signal_service.js
+    envVars:
+      - key: NODE_ENV
+        value: production
