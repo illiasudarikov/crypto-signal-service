@@ -1,8 +1,13 @@
 {
   "name": "crypto-signal-service",
-  "version": "1.0.0",
-  "main": "signal_service.js",
+  "version": "2.0.0",
+  "main": "server.js",
   "scripts": {
-    "start": "node signal_service.js"
+    "start": "node server.js",
+    "scan": "node signal_service_with_telegram.js --top=10",
+    "test": "node signal_service.js --top=5"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
   }
 }

@@ -4,7 +4,12 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node signal_service.js",
-    "regions": ["us-east1"]
+    "startCommand": "node server.js",
+    "regions": ["us-east1"],
+    "cron": {
+      "enabled": true,
+      "expression": "0 * * * *",
+      "command": "node signal_service_with_telegram.js --top=10"
+    }
   }
 }
