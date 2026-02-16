@@ -5,7 +5,6 @@
  */
 
 const https = require('https');
-const { execSync } = require('child_process');
 
 // Configuration
 const HYPERLIQUID_API = 'https://api.hyperliquid.xyz/info';
@@ -16,6 +15,12 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const CRON_MODE = process.env.CRON_MODE === 'true';
 const DEFAULT_RISK_PER_TRADE = 0.02;
 const MAX_LEVERAGE = 10;
+
+console.log('\n🔧 ENV CHECK:');
+console.log('  TELEGRAM_BOT_TOKEN:', TELEGRAM_BOT_TOKEN ? '✅ SET' : '❌ NOT SET');
+console.log('  TELEGRAM_CHAT_ID:', TELEGRAM_CHAT_ID ? '✅ SET' : '❌ NOT SET');
+console.log('  CRON_MODE:', CRON_MODE ? '✅ true' : '❌ false');
+console.log('');
 
 // Parse args
 const args = process.argv.slice(2);
@@ -190,7 +195,10 @@ function calculatePositionSize(signal, accountBalance = 10000, risk = 0.02) {
 // ============ TELEGRAM NOTIFICATION ============
 
 async function sendTelegramSignal(signal, risk) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return false;
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.log(`  ⚠️ Cannot send Telegram: ${!TELEGRAM_BOT_TOKEN ? 'Missing BOT_TOKEN' : 'Missing CHAT_ID'}`);
+    return false;
+  }
   
   const text = `🚀 *CRYPTO SIGNAL #${signal.asset}*\n\n` +
     `📈 *Direction:* ${signal.bias} (${signal.bias === 'BULLISH' ? 'LONG' : 'SHORT'})\n` +
@@ -214,11 +222,26 @@ async function sendTelegramSignal(signal, risk) {
       }, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
-        res.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
+        res.on('end', () => { 
+          try { 
+            const parsed = JSON.parse(data);
+            resolve(parsed); 
+          } catch (e) { reject(e); } 
+        });
       }).on('error', reject);
     });
-    return true;
-  } catch (e) { return false; }
+    
+    if (response.ok) {
+      console.log(`  ✅ Telegram sent: ${signal.asset}`);
+      return true;
+    } else {
+      console.log(`  ⚠️ Telegram failed: ${response.description || 'Unknown error'}`);
+      return false;
+    }
+  } catch (e) {
+    console.log(`  ❌ Telegram error: ${e.message}`);
+    return false;
+  }
 }
 
 // ============ MAIN ============
@@ -258,25 +281,15 @@ async function generateSignals() {
 
     console.log(`✅ Found ${topSignals.length} signals\n`);
 
-    let telegramSent = false;
-    
-    topSignals.forEach((signal, index) => {
-      const risk = calculatePositionSize(signal);
+    if (CRON_MODE && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      console.log('📱 Sending Telegram notifications...\n');
       
-      console.log(`\n🔔 SIGNAL #${index + 1}: ${signal.asset}`);
-      console.log('-'.repeat(70));
-      console.log(`📈 Direction: ${signal.bias} | Score: ${signal.score}/100`);
-      console.log(`💵 Price: $${signal.price.toFixed(4)} | 24h: ${signal.change24h > 0 ? '+' : ''}${signal.change24h.toFixed(2)}%`);
-      console.log(`🛑 Stop: $${risk.stopLossPrice.toFixed(4)} | 🎯 TP3: $${risk.takeProfit3.price.toFixed(4)}`);
-      console.log(`⚠️ Risk: $${risk.riskAmount.toFixed(2)} | Leverage: ${risk.leverageToUse.toFixed(1)}x`);
-
-      if (CRON_MODE && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID && index < 3) {
-        sendTelegramSignal(signal, risk).then(success => {
-          if (success) console.log(`📱 Telegram notification sent for ${signal.asset}`);
-        });
+      for (const signal of topSignals.slice(0, 3)) {
+        const risk = calculatePositionSize(signal);
+        await sendTelegramSignal(signal, risk);
       }
-    });
-
+    }
+    
     console.log('\n' + '='.repeat(70));
     console.log('⚠️ DISCLAIMER: NOT financial advice. Trade at your own risk.');
     console.log('='.repeat(70) + '\n');
