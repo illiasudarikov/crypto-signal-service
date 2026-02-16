@@ -213,35 +213,48 @@ async function sendTelegramSignal(signal, risk) {
     `⚠️ *Risk:* $${risk.riskAmount.toFixed(2)} | *Leverage:* ${risk.leverageToUse.toFixed(1)}x\n\n` +
     `_Not financial advice. Trade at your own risk._`;
   
-  try {
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const response = await new Promise((resolve, reject) => {
-      https.post(url, {
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' })
-      }, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => { 
-          try { 
-            const parsed = JSON.parse(data);
-            resolve(parsed); 
-          } catch (e) { reject(e); } 
-        });
-      }).on('error', reject);
+  return new Promise((resolve, reject) => {
+    const url = new URL(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`);
+    const postData = JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: text,
+      parse_mode: 'Markdown'
     });
     
-    if (response.ok) {
-      console.log(`  ✅ Telegram sent: ${signal.asset}`);
-      return true;
-    } else {
-      console.log(`  ⚠️ Telegram failed: ${response.description || 'Unknown error'}`);
-      return false;
-    }
-  } catch (e) {
-    console.log(`  ❌ Telegram error: ${e.message}`);
-    return false;
-  }
+    const req = https.request(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.ok) {
+            console.log(`  ✅ Telegram sent: ${signal.asset}`);
+            resolve(true);
+          } else {
+            console.log(`  ⚠️ Telegram failed: ${parsed.description || 'Unknown error'}`);
+            resolve(false);
+          }
+        } catch (e) {
+          console.log(`  ❌ Telegram parse error: ${e.message}`);
+          resolve(false);
+        }
+      });
+    });
+    
+    req.on('error', (e) => {
+      console.log(`  ❌ Telegram network error: ${e.message}`);
+      resolve(false);
+    });
+    
+    req.write(postData);
+    req.end();
+  });
 }
 
 // ============ MAIN ============
