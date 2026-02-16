@@ -2,15 +2,11 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install production deps
 COPY package*.json ./
-RUN npm install --production 2>/dev/null || true
+RUN npm install --production
 
-# Copy app
-COPY signal_service.js .
+COPY . .
 
-# Environment variables
-ENV NODE_ENV=production
+EXPOSE 8080
 
-# Run the service
-CMD ["node", "signal_service.js"]
+CMD ["node", "server.js"]
