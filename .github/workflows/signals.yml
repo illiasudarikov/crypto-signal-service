@@ -28,15 +28,6 @@ jobs:
       - name: Install dependencies
         run: npm install
         
-      - name: Test Telegram with curl
-        run: |
-          echo "=== Testing Telegram API ==="
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d '{"chat_id":"'$TELEGRAM_CHAT_ID'","text":"✅ GitHub Actions: Test signal from workflow"}' \
-            && echo "✅ Telegram test SUCCESS" \
-            || echo "❌ Telegram test FAILED"
-        
       - name: Run Signal Scan
         id: signals
         run: |
@@ -48,10 +39,6 @@ jobs:
         if: always()
         run: |
           echo ""
-          echo "=== Signal Scan Result ==="
-          if [ "${{ steps.signals.outcome }}" == "success" ]; then
-            echo "✅ Signals sent successfully!"
-          else
-            echo "❌ Signal scan failed or had errors"
-            echo "Exit code: ${{ steps.signals.outcome }}"
-          fi
+          echo "=== Workflow Result ==="
+          echo "Status: ${{ job.status }}"
+          echo "Scan outcome: ${{ steps.signals.outcome }}"
