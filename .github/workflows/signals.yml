@@ -28,6 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm install
         
+      - name: Debug Environment
+        run: |
+          echo "=== Environment Check ==="
+          echo "TELEGRAM_BOT_TOKEN set: ${TELEGRAM_BOT_TOKEN:0:10}..."
+          echo "TELEGRAM_CHAT_ID set: ${TELEGRAM_CHAT_ID:0:5}..."
+          echo "CRON_MODE: $CRON_MODE"
+        
       - name: Run Signal Scan
         id: signals
         run: |
