@@ -28,17 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm install
         
-      - name: Debug Environment
-        run: |
-          echo "=== Environment Check ==="
-          echo "TELEGRAM_BOT_TOKEN set: ${TELEGRAM_BOT_TOKEN:0:10}..."
-          echo "TELEGRAM_CHAT_ID set: ${TELEGRAM_CHAT_ID:0:5}..."
-          echo "CRON_MODE: $CRON_MODE"
-        
-      - name: Test Telegram Connectivity
+      - name: Test Telegram with curl
         run: |
           echo "=== Testing Telegram API ==="
-          curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe" || echo "Telegram API unreachable"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d '{"chat_id":"'$TELEGRAM_CHAT_ID'","text":"✅ GitHub Actions: Test signal from workflow"}' \
+            && echo "✅ Telegram test SUCCESS" \
+            || echo "❌ Telegram test FAILED"
         
       - name: Run Signal Scan
         id: signals
