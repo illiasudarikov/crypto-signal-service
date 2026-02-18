@@ -29,14 +29,20 @@ jobs:
         run: npm install
         
       - name: Run Signal Scan
+        id: signals
         run: |
           echo "🔍 Scanning for signals..."
-          node signal_service_with_telegram.js --top=10 || echo "Script exited with code $?"
+          node signal_service_with_telegram.js --top=10
         continue-on-error: true
         
-      - name: Show Output
+      - name: Check Result
         if: always()
         run: |
           echo ""
-          echo "=== Workflow completed ==="
-          echo "Status: ${{ job.status }}"
+          echo "=== Signal Scan Result ==="
+          if [ "${{ steps.signals.outcome }}" == "success" ]; then
+            echo "✅ Signals sent successfully!"
+          else
+            echo "❌ Signal scan failed or had errors"
+            echo "Exit code: ${{ steps.signals.outcome }}"
+          fi
