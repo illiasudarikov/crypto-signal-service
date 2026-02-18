@@ -5,6 +5,11 @@
   },
   "deploy": {
     "startCommand": "node server.js",
-    "regions": ["us-east1"]
+    "regions": ["us-east1"],
+    "cron": {
+      "enabled": true,
+      "expression": "0 10,11,12,13,14,15,16 * * *",
+      "command": "node signal_service_with_telegram.js --top=10"
+    }
   }
 }
