@@ -296,11 +296,15 @@ async function generateSignals() {
 
     if (CRON_MODE && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       console.log('📱 Sending Telegram notifications...\n');
+      console.log('DEBUG: TELEGRAM_BOT_TOKEN length:', TELEGRAM_BOT_TOKEN.length);
+      console.log('DEBUG: TELEGRAM_CHAT_ID:', TELEGRAM_CHAT_ID);
       
       for (const signal of topSignals.slice(0, 3)) {
         const risk = calculatePositionSize(signal);
         await sendTelegramSignal(signal, risk);
       }
+    } else {
+      console.log('ℹ️ SKIPPING Telegram notifications (CRON_MODE:', CRON_MODE, 'TELEGRAM_BOT_TOKEN:', !!TELEGRAM_BOT_TOKEN, 'TELEGRAM_CHAT_ID:', !!TELEGRAM_CHAT_ID, ')');
     }
     
     console.log('\n' + '='.repeat(70));
